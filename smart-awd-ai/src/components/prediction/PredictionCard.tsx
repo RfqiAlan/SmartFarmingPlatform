@@ -85,7 +85,7 @@ export default function PredictionCard({
         </h3>
         
         {prediction.status === "AMAN" && <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 bg-green-500/20 text-green-700 dark:text-green-400 rounded-full"><CheckCircle2 size={12}/> AMAN</span>}
-        {prediction.status === "WASPADA" && <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full"><AlertTriangle size={12}/> WASPADA</span>}
+        {prediction.status === "PERINGATAN" && <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full"><AlertTriangle size={12}/> PERINGATAN</span>}
         {prediction.status === "KRITIS" && <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 bg-red-500/20 text-red-700 dark:text-red-400 rounded-full animate-pulse"><AlertTriangle size={12}/> KRITIS</span>}
       </div>
 
@@ -93,7 +93,7 @@ export default function PredictionCard({
         {/* Recommendation Alert Box */}
         <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center transition-colors ${
           prediction.status === "AMAN" ? "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400" :
-          prediction.status === "WASPADA" ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" :
+          prediction.status === "PERINGATAN" ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" :
           "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400"
         }`}>
           <div className="mt-0.5"><Info size={18} /></div>
