@@ -88,7 +88,7 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 dashboard-grid-layout">
           {/* Row 1: Main Level, Device Info, & Current Weather */}
-          <div className="md:col-span-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-8 flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden group">
+          <div className="md:col-span-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-8 flex flex-col items-center justify-center relative overflow-hidden group">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 opacity-50"></div>
             <div className="text-sm font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-6 absolute top-6 left-6">
               💧 Level Air Terkini
@@ -115,7 +115,7 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
           </div>
 
           {/* Device Info */}
-          <div className="md:col-span-1 bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 flex flex-col gap-4 min-h-[300px]">
+          <div className="md:col-span-1 bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 flex flex-col gap-4">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">⚡ Status Perangkat</h3>
             
             <div className="bg-[var(--bg-glass)] rounded-xl p-4 border border-[var(--bg-glass-border)]">
@@ -136,7 +136,7 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
             </div>
           </div>
           
-          <div className="md:col-span-1 h-full">
+          <div className="md:col-span-1">
             <WeatherCard device={currentDevice} />
           </div>
           
