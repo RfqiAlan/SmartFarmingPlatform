@@ -15,6 +15,8 @@ export interface CurrentWeather {
   weathercode: number;
   is_day: number;
   time: string;
+  humidity: number;
+  pressure: number;
 }
 
 /**
@@ -76,7 +78,7 @@ export async function fetchCurrentWeather(lat: number, lng: number): Promise<Cur
   if (lat === undefined || lng === undefined || isNaN(Number(lat)) || isNaN(Number(lng))) return null;
 
   return new Promise((resolve) => {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,weather_code,is_day&timezone=auto`;
     
     const xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);
@@ -85,8 +87,23 @@ export async function fetchCurrentWeather(lat: number, lng: number): Promise<Cur
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const data = JSON.parse(xhr.responseText);
-          if (data.current_weather) {
-            resolve(data.current_weather as CurrentWeather);
+          if (data.current) {
+            resolve({
+              temperature: data.current.temperature_2m,
+              humidity: data.current.relative_humidity_2m,
+              pressure: data.current.surface_pressure,
+              windspeed: data.current.wind_speed_10m,
+              weathercode: data.current.weather_code,
+              is_day: data.current.is_day,
+              time: data.current.time
+            } as CurrentWeather);
+          } else if (data.current_weather) {
+            // Fallback for old cache if any
+            resolve({
+              ...data.current_weather,
+              humidity: 0,
+              pressure: 0
+            });
           } else {
             resolve(null);
           }

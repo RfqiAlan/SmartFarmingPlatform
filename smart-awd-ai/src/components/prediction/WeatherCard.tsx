@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchCurrentWeather, CurrentWeather } from "@/utils/weatherApi";
-import { Cloud, Sun, CloudRain, CloudLightning, CloudSnow, Wind, Thermometer, MapPin } from "lucide-react";
+import { Cloud, Sun, CloudRain, CloudLightning, CloudSnow, Wind, Thermometer, MapPin, Droplets, Gauge } from "lucide-react";
 
 export default function WeatherCard({ device }: { device: any }) {
   const [weather, setWeather] = useState<CurrentWeather | null>(null);
@@ -71,15 +71,18 @@ export default function WeatherCard({ device }: { device: any }) {
 
   if (loading) {
     return (
-      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 animate-shimmer flex flex-col gap-4">
-        <div className="h-4 w-32 bg-[var(--bg-glass)] rounded"></div>
-        <div className="flex gap-4">
-           <div className="w-16 h-16 bg-[var(--bg-glass)] rounded-full"></div>
-           <div className="flex-1 space-y-2">
-              <div className="h-6 bg-[var(--bg-glass)] rounded w-1/2"></div>
-              <div className="h-4 bg-[var(--bg-glass)] rounded w-1/3"></div>
-           </div>
+      <div className="flex flex-col gap-4">
+        <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 animate-shimmer flex flex-col gap-4">
+          <div className="h-4 w-32 bg-[var(--bg-glass)] rounded"></div>
+          <div className="flex gap-4">
+             <div className="w-16 h-16 bg-[var(--bg-glass)] rounded-full"></div>
+             <div className="flex-1 space-y-2">
+                <div className="h-6 bg-[var(--bg-glass)] rounded w-1/2"></div>
+                <div className="h-4 bg-[var(--bg-glass)] rounded w-1/3"></div>
+             </div>
+          </div>
         </div>
+        <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-5 animate-shimmer h-32"></div>
       </div>
     );
   }
@@ -95,45 +98,72 @@ export default function WeatherCard({ device }: { device: any }) {
   const { icon, text } = getWeatherDetails(weather.weathercode);
 
   return (
-    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 flex flex-col justify-center relative overflow-hidden group">
-      <div className="absolute -right-6 -top-6 opacity-5 rotate-12 pointer-events-none">
-        <Cloud size={150} />
+    <div className="flex flex-col gap-4">
+      {/* Main Weather Card */}
+      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 flex flex-col justify-center relative overflow-hidden group">
+        <div className="absolute -right-6 -top-6 opacity-5 rotate-12 pointer-events-none">
+          <Cloud size={150} />
+        </div>
+        
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
+          <MapPin size={14} /> Cuaca Saat Ini
+        </h3>
+        
+        {locationName ? (
+          <div className="text-xs text-[var(--text-secondary)] mb-4 truncate mt-1" title={locationName}>
+            📍 {locationName}
+          </div>
+        ) : (
+          <div className="mb-4"></div>
+        )}
+        
+        <div className="flex items-center gap-6 mb-4">
+          <div className="p-3 bg-[var(--bg-glass)] rounded-2xl border border-[var(--bg-glass-border)]">
+            {icon}
+          </div>
+          <div>
+            <div className="text-4xl font-black font-mono tracking-tighter text-[var(--text-primary)] flex items-start">
+              {weather.temperature.toFixed(1)}<span className="text-lg mt-1 text-[var(--text-secondary)]">°C</span>
+            </div>
+            <div className="text-[var(--text-secondary)] font-medium">
+              {text}
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 mt-auto pt-2 border-t border-[var(--bg-glass-border)]">
+          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <Thermometer size={14} className="text-orange-600 dark:text-orange-400" />
+            <span>Suhu Udara</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <Wind size={14} className="text-cyan-600 dark:text-cyan-400" />
+            <span>{weather.windspeed} km/h</span>
+          </div>
+        </div>
       </div>
       
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
-        <MapPin size={14} /> Cuaca Saat Ini
-      </h3>
-      
-      {locationName ? (
-        <div className="text-xs text-[var(--text-secondary)] mb-4 truncate mt-1" title={locationName}>
-          📍 {locationName}
-        </div>
-      ) : (
-        <div className="mb-4"></div>
-      )}
-      
-      <div className="flex items-center gap-6 mb-4">
-        <div className="p-3 bg-[var(--bg-glass)] rounded-2xl border border-[var(--bg-glass-border)]">
-          {icon}
-        </div>
-        <div>
-          <div className="text-4xl font-black font-mono tracking-tighter text-[var(--text-primary)] flex items-start">
-            {weather.temperature.toFixed(1)}<span className="text-lg mt-1 text-[var(--text-secondary)]">°C</span>
+      {/* Air Details Card (Humidity & Pressure) */}
+      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-5">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3 flex items-center gap-2">
+          <Droplets size={12} /> Detail Udara
+        </h3>
+        
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between text-sm bg-[var(--bg-glass)] px-3 py-2 rounded-lg border border-[var(--bg-glass-border)]">
+            <span className="text-[var(--text-secondary)] text-xs flex items-center gap-2">
+              <Droplets size={14} className="text-blue-500" /> Kelembaban
+            </span>
+            <span className="font-mono font-bold text-xs text-[var(--text-primary)]">{weather.humidity ?? '--'}%</span>
           </div>
-          <div className="text-[var(--text-secondary)] font-medium">
-            {text}
+          <div className="flex items-center justify-between text-sm bg-[var(--bg-glass)] px-3 py-2 rounded-lg border border-[var(--bg-glass-border)]">
+            <span className="text-[var(--text-secondary)] text-xs flex items-center gap-2">
+              <Gauge size={14} className="text-purple-500" /> Tekanan
+            </span>
+            <span className="font-mono font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+              {weather.pressure ?? '--'} <span className="text-[10px] text-[var(--text-muted)] font-sans">hPa</span>
+            </span>
           </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-3 mt-auto pt-2 border-t border-[var(--bg-glass-border)]">
-        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <Thermometer size={14} className="text-orange-600 dark:text-orange-400" />
-          <span>Suhu Udara</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <Wind size={14} className="text-cyan-600 dark:text-cyan-400" />
-          <span>{weather.windspeed} km/h</span>
         </div>
       </div>
     </div>
