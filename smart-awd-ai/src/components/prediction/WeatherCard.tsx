@@ -95,7 +95,7 @@ export default function WeatherCard({ device }: { device: any }) {
   const { icon, text } = getWeatherDetails(weather.weathercode);
 
   return (
-    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 flex flex-col justify-center relative overflow-hidden group">
+    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bg-glass-border)] p-6 flex flex-col justify-center relative overflow-hidden group h-full">
       <div className="absolute -right-6 -top-6 opacity-5 rotate-12 pointer-events-none">
         <Cloud size={150} />
       </div>
