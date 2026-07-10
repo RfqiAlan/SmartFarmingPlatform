@@ -46,7 +46,7 @@ export function Topbar() {
           <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
             <MapPin size={18} />
           </div>
-          <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 hidden sm:inline">
+          <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 hidden sm:inline">
             Smart AWD AI
           </span>
         </Link>
@@ -63,7 +63,7 @@ export function Topbar() {
                 href={item.href}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
                     : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-primary)]"
                 }`}
               >
@@ -77,7 +77,7 @@ export function Topbar() {
         {/* Right side actions */}
         <div className="flex items-center gap-3 ml-auto">
           {currentTime && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] text-blue-400">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] text-blue-600 dark:text-blue-400">
               <Clock size={14} />
               <span className="text-sm font-mono font-bold">
                 {currentTime.toLocaleTimeString("id-ID", {
@@ -138,7 +138,7 @@ export function Topbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
                       : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-primary)]"
                   }`}
                 >

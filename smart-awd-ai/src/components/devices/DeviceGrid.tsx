@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useDevices } from "@/hooks/useDevices";
 import { useLatestDataForAllDevices, SensorData } from "@/hooks/useFirebaseData";
-import { Plus, Trash2, Signal, Clock } from "lucide-react";
+import { Plus, Trash2, Signal, Clock, LayoutGrid, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -15,6 +15,11 @@ const MapPicker = dynamic(() => import("@/components/devices/MapPicker"), {
   loading: () => <div className="h-[250px] w-full bg-[var(--bg-glass)] rounded-xl flex items-center justify-center animate-shimmer border border-[var(--bg-glass-border)]">Memuat peta...</div>
 });
 
+const DeviceMap = dynamic(() => import("@/components/devices/DeviceMap"), { 
+  ssr: false,
+  loading: () => <div className="h-[600px] w-full bg-[var(--bg-glass)] rounded-2xl flex items-center justify-center animate-shimmer border border-[var(--bg-glass-border)]">Memuat peta perangkat...</div>
+});
+
 export function DeviceGrid() {
   const { devices, loading: devicesLoading, addDevice, removeDevice } = useDevices();
   const { latestData, loading: dataLoading } = useLatestDataForAllDevices();
@@ -24,6 +29,7 @@ export function DeviceGrid() {
   const [newLat, setNewLat] = useState("");
   const [newLng, setNewLng] = useState("");
   const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,12 +100,31 @@ export function DeviceGrid() {
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">Overview</h1>
           <p className="text-[var(--text-secondary)] mt-1">Total {devices.length} device aktif</p>
         </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all"
-        >
-          <Plus size={18} /> Tambah Device
-        </button>
+        
+        <div className="flex items-center gap-4">
+          {/* View Toggle */}
+          <div className="bg-[var(--bg-glass)] p-1 rounded-xl border border-[var(--bg-glass-border)] flex items-center">
+            <button 
+              onClick={() => setViewMode("grid")}
+              className={`p-2 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors ${viewMode === "grid" ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"}`}
+            >
+              <LayoutGrid size={18} /> <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button 
+              onClick={() => setViewMode("map")}
+              className={`p-2 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors ${viewMode === "map" ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"}`}
+            >
+              <MapIcon size={18} /> <span className="hidden sm:inline">Map</span>
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all"
+          >
+            <Plus size={18} /> Tambah Device
+          </button>
+        </div>
       </div>
 
       {devices.length === 0 ? (
@@ -110,8 +135,8 @@ export function DeviceGrid() {
           <h3 className="text-xl font-semibold mb-2 text-[var(--text-primary)]">Belum ada device</h3>
           <p className="text-[var(--text-secondary)] max-w-sm mb-6">Tambahkan ESP32 Water Monitor pertama Anda untuk mulai melihat data real-time.</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      ) : viewMode === "grid" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in">
           {devices.map((device) => {
             const data = latestData[device.id];
             return (
@@ -124,6 +149,10 @@ export function DeviceGrid() {
             );
           })}
         </div>
+      ) : (
+        <div className="animate-fade-in">
+          <DeviceMap devices={devices} latestData={latestData} />
+        </div>
       )}
 
       {/* Add Modal */}
@@ -132,7 +161,7 @@ export function DeviceGrid() {
           <div className="bg-[var(--bg-secondary)] border border-[var(--bg-glass-border)] rounded-2xl w-full max-w-2xl shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-[var(--bg-glass-border)] flex justify-between items-center sticky top-0 bg-[var(--bg-secondary)] z-10">
               <h3 className="text-xl font-bold">Tambah Device</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-[var(--text-muted)] hover:text-white">✕</button>
+              <button onClick={() => setIsAddModalOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">✕</button>
             </div>
             <form onSubmit={handleAdd} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -143,7 +172,7 @@ export function DeviceGrid() {
                     type="text" 
                     value={newDeviceId}
                     onChange={e => setNewDeviceId(e.target.value)}
-                    className="w-full px-4 py-2 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-white focus:border-blue-500 outline-none"
+                    className="w-full px-4 py-2 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-[var(--text-primary)] focus:border-blue-500 outline-none"
                     placeholder="e.g., flood-node-01"
                   />
                 </div>
@@ -153,7 +182,7 @@ export function DeviceGrid() {
                     type="text" 
                     value={newDeviceName}
                     onChange={e => setNewDeviceName(e.target.value)}
-                    className="w-full px-4 py-2 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-white focus:border-blue-500 outline-none"
+                    className="w-full px-4 py-2 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-[var(--text-primary)] focus:border-blue-500 outline-none"
                     placeholder="e.g., Sawah Blok A"
                   />
                 </div>
@@ -179,7 +208,7 @@ export function DeviceGrid() {
                       step="any"
                       value={newLat}
                       onChange={e => setNewLat(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-white focus:border-blue-500 outline-none text-sm transition-colors"
+                      className="w-full px-3 py-1.5 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-[var(--text-primary)] focus:border-blue-500 outline-none text-sm transition-colors"
                       placeholder="e.g. -6.200000"
                     />
                   </div>
@@ -190,7 +219,7 @@ export function DeviceGrid() {
                       step="any" 
                       value={newLng}
                       onChange={e => setNewLng(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-white focus:border-blue-500 outline-none text-sm transition-colors"
+                      className="w-full px-3 py-1.5 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg text-[var(--text-primary)] focus:border-blue-500 outline-none text-sm transition-colors"
                       placeholder="e.g. 106.816666"
                     />
                   </div>
@@ -201,7 +230,7 @@ export function DeviceGrid() {
               </div>
               {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:text-white">Batal</button>
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Batal</button>
                 <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">Simpan</button>
               </div>
             </form>

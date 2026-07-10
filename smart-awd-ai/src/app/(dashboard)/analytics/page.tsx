@@ -15,6 +15,7 @@ import {
 export default function AnalyticsPage() {
   const { devices, loading: devicesLoading } = useDevices();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  const [timeFilter, setTimeFilter] = useState<"24h" | "7d" | "30d">("24h");
   
   // Set default selected device when devices load
   useEffect(() => {
@@ -23,7 +24,8 @@ export default function AnalyticsPage() {
     }
   }, [devices, selectedDeviceId]);
 
-  const { data, loading: dataLoading } = useFirebaseData(selectedDeviceId || undefined, 200);
+  const dataLimit = timeFilter === "24h" ? 500 : timeFilter === "7d" ? 3000 : 10000;
+  const { data, loading: dataLoading } = useFirebaseData(selectedDeviceId || undefined, dataLimit);
 
   // Computed analytics data
   const { chartData, kpi } = useMemo(() => {
@@ -31,12 +33,69 @@ export default function AnalyticsPage() {
       return { chartData: [], kpi: null };
     }
 
+    const now = Date.now();
+    let cutoff = 0;
+    let groupIntervalMs = 0;
+    
+    if (timeFilter === "24h") {
+      cutoff = now - 24 * 60 * 60 * 1000;
+      groupIntervalMs = 0; // No downsampling
+    } else if (timeFilter === "7d") {
+      cutoff = now - 7 * 24 * 60 * 60 * 1000;
+      groupIntervalMs = 2 * 60 * 60 * 1000; // Group every 2 hours
+    } else {
+      cutoff = now - 30 * 24 * 60 * 60 * 1000;
+      groupIntervalMs = 24 * 60 * 60 * 1000; // Group every 24 hours
+    }
+
+    // Filter by cutoff
+    let validData = data.filter(d => {
+      const t = typeof d.created_at === 'number' ? d.created_at : new Date(d.created_at).getTime();
+      return t >= cutoff;
+    });
+
+    // Downsampling Logic
+    let processedData = validData;
+    
+    if (groupIntervalMs > 0 && validData.length > 0) {
+      const grouped = new Map();
+      
+      validData.forEach(d => {
+        const t = typeof d.created_at === 'number' ? d.created_at : new Date(d.created_at).getTime();
+        const intervalKey = Math.floor(t / groupIntervalMs) * groupIntervalMs;
+        
+        if (!grouped.has(intervalKey)) {
+          grouped.set(intervalKey, {
+            timeKey: intervalKey,
+            sumLevel: 0,
+            sumSignal: 0,
+            count: 0,
+            status: d.status
+          });
+        }
+        const group = grouped.get(intervalKey);
+        group.sumLevel += parseFloat(d.water_level_cm.toString());
+        group.sumSignal += d.signal_strength;
+        group.count += 1;
+      });
+      
+      processedData = Array.from(grouped.values()).map(g => ({
+        created_at: g.timeKey,
+        water_level_cm: (g.sumLevel / g.count).toFixed(2),
+        signal_strength: Math.round(g.sumSignal / g.count),
+        status: g.status
+      })) as any[];
+      
+      // Sort ascending by time
+      processedData.sort((a, b) => (a.created_at as number) - (b.created_at as number));
+    }
+
     let sumLevel = 0;
     let sumSignal = 0;
     let maxLevel = -999;
     let minLevel = 999;
 
-    const formattedData = data.map(d => {
+    const formattedData = processedData.map(d => {
       const level = parseFloat(d.water_level_cm.toString());
       const signal = d.signal_strength;
       
@@ -45,8 +104,19 @@ export default function AnalyticsPage() {
       if (level > maxLevel) maxLevel = level;
       if (level < minLevel) minLevel = level;
 
+      const t = typeof d.created_at === 'number' ? d.created_at : new Date(d.created_at).getTime();
+      
+      // Format time string based on filter
+      let timeStr = "";
+      if (timeFilter === "24h") {
+        timeStr = new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        const dObj = new Date(t);
+        timeStr = `${dObj.getDate()} ${dObj.toLocaleString('id-ID', { month: 'short' })} ${dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+
       return {
-        time: new Date(typeof d.created_at === 'number' ? d.created_at : d.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        time: timeStr,
         waterLevel: level,
         signal: signal,
         status: d.status
@@ -55,14 +125,14 @@ export default function AnalyticsPage() {
 
     return {
       chartData: formattedData,
-      kpi: {
-        avgLevel: (sumLevel / data.length).toFixed(1),
+      kpi: formattedData.length > 0 ? {
+        avgLevel: (sumLevel / formattedData.length).toFixed(1),
         maxLevel: maxLevel.toFixed(1),
         minLevel: minLevel.toFixed(1),
-        avgSignal: Math.round(sumSignal / data.length)
-      }
+        avgSignal: Math.round(sumSignal / formattedData.length)
+      } : { avgLevel: "0", maxLevel: "0", minLevel: "0", avgSignal: 0 }
     };
-  }, [data]);
+  }, [data, timeFilter]);
 
   const loading = devicesLoading || dataLoading;
 
@@ -75,7 +145,29 @@ export default function AnalyticsPage() {
           <p className="text-[var(--text-secondary)] mt-1 text-sm md:text-base">Analisa data historis tinggi air dan sinyal perangkat</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+          {/* Time Filter UI */}
+          <div className="flex bg-[var(--bg-glass)] p-1 rounded-xl border border-[var(--bg-glass-border)]">
+            <button 
+              onClick={() => setTimeFilter("24h")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${timeFilter === "24h" ? "bg-blue-600 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+            >
+              24 Jam
+            </button>
+            <button 
+              onClick={() => setTimeFilter("7d")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${timeFilter === "7d" ? "bg-blue-600 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+            >
+              7 Hari
+            </button>
+            <button 
+              onClick={() => setTimeFilter("30d")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${timeFilter === "30d" ? "bg-blue-600 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+            >
+              30 Hari
+            </button>
+          </div>
+
           <div className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] rounded-lg">
             <Filter size={16} className="text-[var(--text-muted)]" />
             <select 
@@ -96,7 +188,7 @@ export default function AnalyticsPage() {
                 ))
               )}
             </select>
-            <ChevronDown size={14} className="text-[var(--text-muted)] absolute right-9 pointer-events-none" />
+            <ChevronDown size={14} className="text-[var(--text-muted)] absolute right-2 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -169,7 +261,7 @@ export default function AnalyticsPage() {
                   <Droplets size={20} className="text-blue-500" /> Tren Ketinggian Air
                 </h3>
                 <span className="text-xs text-[var(--text-muted)] px-3 py-1 bg-[var(--bg-glass)] rounded-full">
-                  200 Data Terakhir
+                  {timeFilter === "24h" ? "24 Jam Terakhir" : timeFilter === "7d" ? "7 Hari Terakhir" : "30 Hari Terakhir"}
                 </span>
               </div>
               <div className="h-[350px] w-full mt-auto">

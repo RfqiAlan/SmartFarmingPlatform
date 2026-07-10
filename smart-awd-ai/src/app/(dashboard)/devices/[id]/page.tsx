@@ -18,6 +18,7 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
   const { data, loading: dataLoading } = useFirebaseData(id, 100);
   const { devices, loading: devicesLoading } = useDevices();
   const [isResetting, setIsResetting] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const loading = dataLoading || devicesLoading;
 
@@ -182,7 +183,7 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--bg-glass-border)]">
-                  {[...data].reverse().map((row, idx) => (
+                  {[...data].reverse().slice(0, visibleCount).map((row, idx) => (
                     <tr key={idx} className="hover:bg-[var(--bg-glass)] transition-colors">
                       <td className="py-3 text-[var(--text-primary)]">
                         {new Date(typeof row.created_at === 'number' ? row.created_at : row.created_at).toLocaleString('id-ID')}
@@ -208,6 +209,16 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
               </table>
               {data.length === 0 && (
                 <div className="text-center py-6 text-[var(--text-muted)]">Belum ada riwayat data</div>
+              )}
+              {visibleCount < data.length && (
+                <div className="flex justify-center mt-6">
+                  <button 
+                    onClick={() => setVisibleCount(prev => prev + 10)}
+                    className="px-4 py-2 bg-[var(--bg-glass)] hover:bg-[var(--bg-card-hover)] border border-[var(--bg-glass-border)] rounded-xl text-sm font-semibold transition-colors text-[var(--text-primary)]"
+                  >
+                    Lihat Lebih Banyak ({data.length - visibleCount} tersisa)
+                  </button>
+                </div>
               )}
             </div>
           </div>

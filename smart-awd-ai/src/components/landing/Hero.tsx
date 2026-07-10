@@ -9,9 +9,9 @@ export function Hero() {
       <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] text-sm font-medium text-blue-400 mb-8 animate-fade-in-up">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-glass)] border border-[var(--bg-glass-border)] text-sm font-medium text-blue-600 dark:text-blue-400 mb-8 animate-fade-in-up">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 dark:bg-blue-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
           </span>
           Smart AWD AI v1.0 is Live
@@ -19,7 +19,7 @@ export function Hero() {
         
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 animate-fade-in-up animation-delay-100">
           Smart Water Management <br />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-500">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-purple-600 dark:from-blue-400 dark:via-cyan-400 dark:to-purple-500">
             for Sustainable Agriculture
           </span>
         </h1>
@@ -51,17 +51,17 @@ export function Hero() {
 export function Features() {
   const features = [
     {
-      icon: <Droplets className="w-6 h-6 text-blue-400" />,
+      icon: <Droplets className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
       title: "Real-time Monitoring",
       desc: "Pantau tinggi muka air (AWD) sawah Anda 24/7 menggunakan sensor ultrasonik berakurasi tinggi."
     },
     {
-      icon: <Cpu className="w-6 h-6 text-purple-400" />,
+      icon: <Cpu className="w-6 h-6 text-purple-600 dark:text-purple-400" />,
       title: "AI Prediction Engine",
       desc: "Prediksi tingkat kekeringan 6, 12, dan 24 jam ke depan berdasarkan machine learning cerdas."
     },
     {
-      icon: <LineChart className="w-6 h-6 text-cyan-400" />,
+      icon: <LineChart className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />,
       title: "Data Analytics",
       desc: "Analisa historis tinggi air, performa baterai surya, dan kekuatan sinyal perangkat."
     }

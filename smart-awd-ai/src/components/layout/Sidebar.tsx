@@ -49,7 +49,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
               <MapPin size={18} />
             </div>
-            <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+            <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
               Smart AWD AI
             </span>
           </div>
@@ -67,7 +67,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 isActive 
-                  ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" 
                   : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-primary)]"
               }`}
             >
