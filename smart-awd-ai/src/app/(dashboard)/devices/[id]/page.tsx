@@ -12,6 +12,7 @@ import WeatherCard from "@/components/prediction/WeatherCard";
 import ForecastCard from "@/components/prediction/ForecastCard";
 import AiAssistant from "@/components/chat/AiAssistant";
 import CalibrationPanel from "@/components/devices/CalibrationPanel";
+import Swal from "sweetalert2";
 
 export default function DeviceDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -26,9 +27,20 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
   const currentData = data.length > 0 ? data[data.length - 1] : null;
 
   const handleResetData = async () => {
-    if (!window.confirm(`Yakin ingin mereset seluruh log data untuk perangkat ${currentDevice?.name || id}? Tindakan ini tidak bisa dibatalkan.`)) {
-      return;
-    }
+    const confirmResult = await Swal.fire({
+      title: 'Hapus Log Data?',
+      text: `Yakin ingin mereset seluruh log data untuk perangkat ${currentDevice?.name || id}? Tindakan ini tidak bisa dibatalkan.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#3b82f6',
+      confirmButtonText: 'Ya, Hapus Semua!',
+      cancelButtonText: 'Batal',
+      background: 'var(--bg-secondary)',
+      color: 'var(--text-primary)',
+    });
+
+    if (!confirmResult.isConfirmed) return;
     
     setIsResetting(true);
     try {
@@ -42,13 +54,34 @@ export default function DeviceDetail({ params }: { params: Promise<{ id: string 
           updates[child.key] = null;
         });
         await update(ref(database, "data"), updates);
-        alert("Berhasil mereset log data! Silakan tunggu data baru masuk.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Log data telah direset. Silakan tunggu data baru masuk.',
+          background: 'var(--bg-secondary)',
+          color: 'var(--text-primary)',
+          confirmButtonColor: '#3b82f6',
+        });
       } else {
-        alert("Tidak ada data untuk dihapus.");
+        Swal.fire({
+          icon: 'info',
+          title: 'Kosong',
+          text: 'Tidak ada data untuk dihapus.',
+          background: 'var(--bg-secondary)',
+          color: 'var(--text-primary)',
+          confirmButtonColor: '#3b82f6',
+        });
       }
     } catch (err) {
       console.error("Gagal mereset data:", err);
-      alert("Terjadi kesalahan saat mereset data.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Terjadi kesalahan saat mereset data.',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)',
+        confirmButtonColor: '#ef4444',
+      });
     } finally {
       setIsResetting(false);
     }

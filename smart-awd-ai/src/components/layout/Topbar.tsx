@@ -12,7 +12,6 @@ import {
   MapPin,
   Sun,
   Moon,
-  Bell,
   Clock,
   Menu,
   X,
@@ -103,11 +102,6 @@ export function Topbar() {
               {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           )}
-
-          <button className="p-2 rounded-full hover:bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors relative">
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-[var(--bg-primary)]"></span>
-          </button>
 
           {/* Mobile hamburger */}
           <button

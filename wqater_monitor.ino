@@ -2,16 +2,18 @@
  * ============================================================
  * Sistem Monitoring Level Air Tanah Berbasis IoT
  * ============================================================
- * Konsep Pipa:
- *   Sensor JSN-SR04T dipasang di puncak pipa vertikal.
- *   Pipa: 15cm di bawah tanah + 45cm di atas tanah = 60cm total.
- *   Sensor mengukur jarak ke permukaan air di dalam pipa.
+ * Konsep Pipa & Sensor:
+ *   Sensor JSN-SR04T dipasang 25cm di atas ujung pipa untuk menghindari blind spot.
+ *   Pipa: 20cm di atas tanah + 20cm di bawah tanah = 40cm total.
+ *   Sensor mengukur jarak ke permukaan air.
  *
  *   Sensor (0cm)
- *   │  45cm di atas tanah
+ *   │  25cm jarak udara (blind spot aman)
+ *   ├── Ujung Atas Pipa (25cm dari sensor)
+ *   │  20cm di atas tanah
  *   ├── Permukaan Tanah (45cm dari sensor)
- *   │  15cm di bawah tanah
- *   └── Dasar Pipa (60cm dari sensor)
+ *   │  20cm di bawah tanah
+ *   └── Dasar Pipa (65cm dari sensor)
  *
  * Status:
  *   KELEBIHAN AIR : Jarak sensor ≤ 35cm (air > 10cm di atas tanah)
@@ -87,15 +89,26 @@ const char CONFIG_ENDPOINT[] = "/apps/thinghttp/send_request?api_key=8BDN3RI0XZD
 // -- Device Configuration --
 const char DEVICE_ID[]    = "flood-node-01";
 
+// -- Weather API (Open-Meteo) --
+// Silakan ubah latitude dan longitude sesuai lokasi alat di lapangan (Default: Jakarta Pusat)
+const char WEATHER_HOST[] = "api.open-meteo.com";
+const int WEATHER_PORT    = 80;
+const char WEATHER_PATH[] = "/v1/forecast?latitude=-6.2088&longitude=106.8456&current_weather=true";
+
 // -- Sensor & Pipe Configuration --
-const float SPEED_OF_SOUND        = 0.0343;  // cm/µs (at ~20°C)
-const float PIPE_ABOVE_GROUND_CM  = 45.0;    // Panjang pipa di atas tanah (cm)
-const float PIPE_BELOW_GROUND_CM  = 15.0;    // Panjang pipa di bawah tanah (cm)
-const float PIPE_TOTAL_CM         = 60.0;    // Total pipa (45 + 15)
+float currentAmbientTemperature   = 30.0;    // Suhu default sebelum mendapat data dari API
+#define SPEED_OF_SOUND ((331.4 + (0.606 * currentAmbientTemperature)) / 10000.0) // cm/µs dinamis
+const float SENSOR_OFFSET_CM      = 25.0;    // Jarak sensor ke ujung atas pipa (menghindari blind spot)
+const float PIPE_ABOVE_GROUND_CM  = 20.0;    // Panjang pipa di atas tanah (cm)
+const float PIPE_BELOW_GROUND_CM  = 20.0;    ?"
+[]-=034eqwdafsghjkl;'
+p[765et4r-=5re4dswftgpoiuytry[;']p9te4rsdtfyp-=[\=]" // Total pipa (20 + 20)
+
+// Jarak dari sensor ke permukaan tanah = SENSOR_OFFSET_CM + PIPE_ABOVE_GROUND_CM = 45cm
 
 // -- Threshold berdasarkan JARAK dari sensor (cm) --
-const float THRESHOLD_KELEBIHAN_AIR = 35.0;  // Jarak ≤ 35cm = KELEBIHAN AIR
-const float THRESHOLD_KEKERINGAN    = 55.0;  // Jarak ≥ 55cm = KEKERINGAN
+const float THRESHOLD_KELEBIHAN_AIR = 35.0;  // Jarak ≤ 35cm = air > 10cm di atas tanah (KELEBIHAN AIR)
+const float THRESHOLD_KEKERINGAN    = 55.0;  // Jarak ≥ 55cm = air > 10cm di bawah tanah (KEKERINGAN)
 
 // -- Timing: Mode Kalibrasi vs Normal --
 const unsigned long CALIBRATION_INTERVAL_MS  = 5 * 1000;           // 5 detik (kalibrasi)
@@ -167,6 +180,13 @@ void setup() {
 // ==================== MAIN LOOP ====================
 
 void loop() {
+  // 0. Update suhu lingkungan dari API (Maksimal tiap 10 menit untuk menghindari limit API)
+  static unsigned long lastWeatherFetch = 0;
+  if (millis() - lastWeatherFetch >= 10UL * 60 * 1000 || lastWeatherFetch == 0) {
+    fetchAmbientTemperature();
+    lastWeatherFetch = millis();
+  }
+
   // 1. Ukur jarak sensor ke permukaan air (mentah)
   float rawDistance = measureDistance();
   
@@ -276,8 +296,9 @@ float measureDistance() {
 
     if (duration > 0) {
       float dist = (duration * SPEED_OF_SOUND) / 2.0;
-      // Filter: hanya terima jarak dalam range pipa (0 - PIPE_TOTAL_CM + margin)
-      if (dist > 0 && dist <= PIPE_TOTAL_CM + 10) {
+      // Filter: hanya terima jarak dalam range pipa yang valid
+      // Maksimal jarak adalah sampai dasar pipa (SENSOR_OFFSET_CM + PIPE_TOTAL_CM) ditambah margin
+      if (dist > 0 && dist <= (SENSOR_OFFSET_CM + PIPE_TOTAL_CM + 10)) {
         readings[validCount] = dist;
         validCount++;
       }
@@ -302,16 +323,16 @@ float measureDistance() {
  * Return: cm (positif = di atas tanah, negatif = di bawah tanah)
  *
  * Contoh:
- *   distance = 35cm → waterLevel = 45 - 35 = +10cm (10cm di atas tanah)
- *   distance = 45cm → waterLevel = 45 - 45 =   0cm (tepat di permukaan)
- *   distance = 55cm → waterLevel = 45 - 55 = -10cm (10cm di bawah tanah)
+ *   distance = 35cm → waterLevel = (25 + 20) - 35 = +10cm (10cm di atas tanah)
+ *   distance = 45cm → waterLevel = (25 + 20) - 45 =   0cm (tepat di permukaan)
+ *   distance = 55cm → waterLevel = (25 + 20) - 55 = -10cm (10cm di bawah tanah)
  */
 float calculateWaterLevel(float distance) {
   if (distance == 0) {
     // Tidak ada pantulan → air sangat rendah atau tidak ada
-    return -(PIPE_BELOW_GROUND_CM);  // Return -15 (dasar pipa)
+    return -(PIPE_BELOW_GROUND_CM);  // Return nilai negatif sebesar panjang pipa di bawah tanah
   }
-  return PIPE_ABOVE_GROUND_CM - distance;
+  return (SENSOR_OFFSET_CM + PIPE_ABOVE_GROUND_CM) - distance;
 }
 
 // ==================== STATUS FUNCTIONS ====================
@@ -395,6 +416,45 @@ bool readCalibrationMode() {
   SerialMon.println(F(" cm"));
 
   return mode;
+}
+
+// ==================== WEATHER API FUNCTIONS ====================
+
+/**
+ * Mengambil suhu udara saat ini dari Open-Meteo API (Tanpa perlu API Key)
+ */
+void fetchAmbientTemperature() {
+  if (!modem.isGprsConnected()) {
+    SerialMon.println(F("[WEATHER] GPRS disconnected, skip fetch API"));
+    return;
+  }
+
+  SerialMon.println(F("[WEATHER] Membaca suhu dari API lokasi..."));
+  HttpClient meteoHttp(gsmClient, WEATHER_HOST, WEATHER_PORT);
+  
+  meteoHttp.beginRequest();
+  meteoHttp.get(WEATHER_PATH);
+  meteoHttp.endRequest();
+
+  int statusCode = meteoHttp.responseStatusCode();
+  String response = meteoHttp.responseBody();
+
+  if (statusCode >= 200 && statusCode < 300) {
+    StaticJsonDocument<768> doc;
+    DeserializationError error = deserializeJson(doc, response);
+    
+    if (!error) {
+      currentAmbientTemperature = doc["current_weather"]["temperature"] | currentAmbientTemperature;
+      SerialMon.print(F("[WEATHER] Suhu terupdate: "));
+      SerialMon.print(currentAmbientTemperature);
+      SerialMon.println(F(" °C"));
+    } else {
+      SerialMon.println(F("[WEATHER] Gagal parsing JSON API cuaca"));
+    }
+  } else {
+    SerialMon.print(F("[WEATHER] Gagal akses API cuaca. HTTP Code: "));
+    SerialMon.println(statusCode);
+  }
 }
 
 // ==================== NETWORK FUNCTIONS ====================
